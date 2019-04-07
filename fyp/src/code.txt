@@ -1,0 +1,543 @@
+﻿// Write your game logic here in JavaScript
+'use strict';
+
+var url = 'http://144.214.104.118:6463/fyp/src/api';
+
+//call the server to create some basic data for a new game and return a gameboardID
+async function initGame (userID, mode, ai) {
+    if (ai === undefined) ai = null;
+    
+    var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 5000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/startGame.php',
+		params: {
+		    userID: userID,
+			mode: mode,
+			ai: ''+ai
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//call the server to get a list of valid location for player to choose
+async function getListOfValidLocation(gameboardID, player) {
+
+    var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 10000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/getListOfValidLocation.php',
+		params: {
+			gameboardID: gameboardID,
+			player: player
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//call the server to update the data based on the location
+async function move(gameboardID, nextX, nextY, player, turn) {
+
+	var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 10000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/move.php',
+		params: {
+			gameboardID: gameboardID,
+			nextX: nextX,
+			nextY: nextY,
+			player: player,
+			turn: turn
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//call the server to get the current board
+async function getCurrentBoard(gameboardID) {
+
+    var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 10000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/getCurrentBoard.php',
+		params: {
+			gameboardID: gameboardID
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//call the server to get a location calculated by the AI
+async function aiMove(gameboardID) {
+
+    var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 10000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/getAIChoice.php',
+		params: {
+			gameboardID: gameboardID,
+			id: 2
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//call the server to update the winner
+async function updateWinner(gameboardID, winner) {
+
+    var axios = require("axios");
+    const instance = axios.create({
+      baseURL: url,
+      timeout: 10000,
+      withCredentials: true,
+      responseType: 'json',
+      headers: {'Content-Type': 'application/json; charset=UTF-8'}
+    });
+	
+	return await instance({
+		method: 'GET',
+		url: '/updateRecord.php',
+		params: {
+			gameboardID: gameboardID,
+			winner: winner
+		}
+	}).then(function (response) {
+		return response.data;
+	}).catch(function (error) {
+		return null;
+	});
+}
+
+//convert int to char
+async function getXByIndex(index) {
+	return await String.fromCharCode(index - 1 + 97); // 0 => a, 1 => b....
+}
+
+//get a board string for printing
+async function getBoardString(b, size) {
+    var i, j, location, x, y;
+    
+	var board = new Array(size);
+	for (i = 0; i < board.length; i++)
+		board[i] = new Array(size);
+
+	var blackLocation = b.black;
+	for (i = 0; i < blackLocation.length; i++) {
+		x = parseInt(blackLocation[i].split('')[1])-1;
+		y = parseInt(blackLocation[i].split('')[0])-1;
+		board[x][y] = '⚫';
+	}
+	
+	var whiteLocation = b.white;
+	for (i = 0; i < whiteLocation.length; i++) {
+		x = parseInt(whiteLocation[i].split('')[1])-1;
+		y = parseInt(whiteLocation[i].split('')[0])-1;
+		board[x][y] = '⚪';
+	}
+	
+	var s = '\n';
+	for (i = 0; i < board.length; i++) {
+		
+		if (i === 0) {
+			s += "🔻";
+			for (j = 0; j < size; j++) {
+				if (j === 0) {
+					s += String.fromCharCode(97+j);
+				} else {
+					s += "   " + String.fromCharCode(97+j);
+				}
+			}
+			s += "🔻\n";
+		}
+			
+		for (j = 0; j < board[i].length; j++) {
+				
+			if (j === 0) {
+				s += (i+1) + " ";
+			}
+			
+			if (board[i][j] == '⚫' || board[i][j] == '⚪') {
+				s += board[i][j];
+			} else {
+				s += '💠';
+			}
+			
+			if (j == board.length-1) {
+				s += " " + (i+1);
+			}
+		}
+			
+		s += '\n';
+			
+		if (i == board.length-1) {
+			s += "🔺️";
+			for (j = 0; j < size; j++) {
+				if (j === 0) {
+					s += String.fromCharCode(97+j);
+				} else {
+					s += "   " + String.fromCharCode(97+j);
+				}
+			}
+			s += "🔺\n";
+		}
+	}
+	return await s;
+}
+
+//check the game whether it is end or not
+async function isEnd(gameboardID) {
+	var blackChoices, whiteChoices;
+	await getListOfValidLocation(gameboardID, 1).then((result) => {
+	    blackChoices = result.list[0].choices;
+	});
+	await getListOfValidLocation(gameboardID, 2).then((result) => {
+	    whiteChoices = result.list[0].choices;
+	});
+	
+	return await (blackChoices.length === 0 && whiteChoices.length === 0);
+}
+
+//start
+const start = (say, sendButton) => {
+    var str1 = "{\"action\":0,\"mode\":";
+    var str2 = ",\"currentplayer\":1,\"turn\":1}";
+    
+    var array = [];
+    
+    array.push({title: '👱🏻 VS 👱🏻', payload: str1+1+str2});
+    array.push({title: '👱🏻 VS 🤖', payload: str1+2+str2});
+    array.push({title: '😊 Share the Game 😍', payload: str1+3+str2});
+    
+	sendButton('Which mode do you want to play?', array);
+};
+
+//handle button events
+const state = async (payload, say, sendButton, userID) => {
+
+	var data = JSON.parse(payload); //set to object type
+	var action = data.action; //ACTION_SETTINGS, ACTION_START, ACTION_MOVE, ACTION_GIVEUP
+	var mode = data.mode; //MODE_PLAYERVSPLAYER, MODE_PLAYERVSAI, MODE_SHARE
+	var AIID = data.AIID; //AIID_EASY, AIID_MEDIUM, AIID_HARD, AIID_EXPERT
+	var newPayload; //keep the new payload
+	var gameboardID = data.gameboardID;
+	var currentplayer = data.currentplayer; //current player in this round
+	var turn = data.turn; //game turn
+	var location, x, y; //e.g. 53 => x=5, y=3 => e3
+	var b; //current board
+	var i; //for some loop
+	var json; //for keeping json results
+	var sayContent = ""; //for keeping say content
+	var size = 8; //the size of the board
+	
+	const ACTION_SETTINGS = 0, ACTION_START = 1, ACTION_MOVE = 2, ACTION_GIVEUP = 9;
+	const MODE_PLAYERVSPLAYER = 1, MODE_PLAYERVSAI = 2, MODE_SHARE = 3;
+	const AIID_EASY = 1, AIID_MEDIUM = 2, AIID_HARD = 3, AIID_EXPERT = 4;
+	
+	if (action === ACTION_SETTINGS) {
+		action = data.action = ACTION_START;
+		newPayload = JSON.stringify(data);
+		
+		//remove the "}" for extending the string
+		newPayload = newPayload.substring(0, newPayload.length-1);
+
+		if (mode === MODE_PLAYERVSAI) {
+		    var array = [];
+		    
+		    array.push({title: '😄 Easy', payload: newPayload + ",\"AIID\":"+AIID_EASY+"}"});
+            array.push({title: '😧 Medium', payload: newPayload + ",\"AIID\":"+AIID_MEDIUM+"}"});
+            array.push({title: '😏 Hard', payload: newPayload + ",\"AIID\":"+AIID_HARD+"}"});
+            array.push({title: '😎 Expert', payload: newPayload + ",\"AIID\":"+AIID_EXPERT+"}"});
+            
+            sendButton('Please choose an AI level:', array);
+        } else if (mode === MODE_SHARE) {
+			say({
+        	    attachment: 'image',
+        	    url: 'https://i.imgur.com/TY5XsOj.png'
+        	});
+			return;
+		}
+	}
+	
+	//check action whether it is ready and mode whether it is ready
+	//if choosing ai mode, it is necessary to check the settings of ai level
+	if (action === ACTION_START && (mode === MODE_PLAYERVSPLAYER || (mode === MODE_PLAYERVSAI && AIID !== undefined))) {
+	    action = data.action = ACTION_MOVE;
+		currentplayer = data.currentplayer;
+		newPayload = JSON.stringify(data);
+        json = await initGame(userID, mode, AIID);
+		if (json == null) {
+			say('Server closed!!');
+			return;
+		}
+        gameboardID = data.gameboardID = json.gameboardID; //create a new board game and get the ID
+	}
+	
+	if (action === ACTION_MOVE) {
+		newPayload = JSON.stringify(data);
+        
+        //check player choice
+	    if (data.nextX !== undefined && data.nextY !== undefined) {
+	        var nextX = data.nextX;
+	        var nextY = data.nextY;
+
+			json = await move(gameboardID, nextX, nextY, currentplayer, turn);
+
+	        //check the update whether it succeeds or not
+	        if (json == null) {
+    	        for (i = 0; i < 3; i++) {
+        	        say('Update failed! Try again now...');
+					json = await move(gameboardID, nextX, nextY, currentplayer, turn);
+        	        if (json != null) { 
+						gameboardID = json.gameboardID;
+						break; 
+					}
+    	        }
+    	        if (i == 3 && json == null) {
+    	            say('Network connection failed, please check your network and click again!!');
+    	            return;
+    	        }
+	        } else {
+				var status = json.status;
+				if (status === 2) {
+					say('Please don\'t click previous buttons.😄');
+					return;
+				}
+				gameboardID = data.gameboardID = json.gameboardID;
+			}
+	        
+	        //remove the previous xy and prepare the string for next round
+		    newPayload = newPayload.substring(0, newPayload.indexOf('nextX')-2)+'}';
+	    
+	        currentplayer = data.currentplayer = currentplayer%2+1;
+	        
+    	    //if player is back to player1, the turn will be added 1
+    	    if (currentplayer === 1) {
+    	    	data.turn += 1;
+    		}
+	    } else {
+	        json = await getListOfValidLocation(gameboardID, currentplayer);
+			var list = json.list[0].choices;
+	        if (list.length === 0) {
+	            currentplayer = data.currentplayer = currentplayer%2+1;
+	            
+	            //if player is back to player1, the turn will be added 1
+        	    if (currentplayer === 1) {
+        	    	data.turn += 1;
+        		}
+	        }
+	    }
+	    
+	    if (currentplayer === 1) {
+	    	sayContent += await '[ Round: '+ data.turn + ' ]\n';
+		}
+	    
+	    b = await getCurrentBoard(gameboardID);
+	    //print board
+        sayContent += await getBoardString(b, size) + '\n';
+	    
+	    //check the game whether it is end or not
+	    if (!await isEnd(gameboardID)) {
+			//check player turn
+			if (currentplayer == 1 || mode == MODE_PLAYERVSPLAYER) {
+			    
+			    //player turn
+				json = await getListOfValidLocation(gameboardID, currentplayer);
+				var list = json.list[0].choices;
+				
+			    var array = [];
+			    
+			    newPayload = JSON.stringify(data);
+			    
+				if (list.length === 0) {
+				    //set "pass" button
+			        array.push({title: "pass", payload: newPayload});
+				} else {
+				    //remove the "}" for extending the string
+				    newPayload = newPayload.substring(0, newPayload.length-1);
+				    
+				    //set the choices from the list
+    				for (i = 0; i < list.length; i++) {
+    			
+    				    //show button
+    					x = await getXByIndex(parseInt(list[i].x));
+    					y = list[i].y;
+                        
+    					array.push({title: x+y, payload: newPayload + ',\"nextX\":' + list[i].x 
+    					                                            + ',\"nextY\":' + list[i].y + '}'
+    					});
+    				}
+				}
+
+                action = data.action = ACTION_GIVEUP;
+		        
+		        newPayload = JSON.stringify(data);
+		        
+		        //set the "give up" button
+				array.push({title: "😵 Give up", payload: newPayload});
+	            //say(array.length + '');
+				say(sayContent + 'Which location do you want to move? ' + '[ Player' + currentplayer + ' ]').then(() => {
+				    sendButton('Choices:', array);
+				});
+			} else {
+			    //ai turn
+			    newPayload = JSON.stringify(data);
+			    
+			    newPayload = newPayload.substring(0, newPayload.indexOf('nextX')-2)+'}';
+			    
+			    //get the location calculated by the AI
+				json = await aiMove(gameboardID);
+				var locationValue = json.location;
+				gameboardID = json.gameboardID;
+				
+				b = await getCurrentBoard(gameboardID);
+				
+		        if (locationValue !== null) {
+				    //remove the "}" for extending the string
+				    newPayload = newPayload.substring(0, newPayload.length-1);
+				    
+				    location = locationValue.split('');
+				    
+				    x = await getXByIndex(parseInt(location[0]));
+    				y = location[1];
+    				
+                	say(sayContent + '\n' + 'AI selected '+x+y).then(() => {
+						state(newPayload + ',\"nextX\":' + location[0] 
+                                         + ',\"nextY\":' + location[1] + '}', say, sendButton);
+					});
+				} else {
+				    say('AI passes').then(() => {
+						state(newPayload, say, sendButton);
+					});
+				}
+			}
+		} else {
+		    //game ended
+		    //print final results
+		    b = await getCurrentBoard(gameboardID);
+		    var numOfBlack = b.black.length;
+		    var numOfWhite = b.white.length;
+		    var winner;
+		    if (numOfBlack == numOfWhite) {
+		        winner = 3;
+		    } else if (numOfBlack > numOfWhite) {
+		        winner = 1;
+		    } else {
+		        winner = 2;
+		    }
+		    
+		    await updateWinner(gameboardID, winner);
+	
+			sayContent = await getBoardString(b, size) + '\n\n';
+				
+		    var finalResult = sayContent + '📊📄 Final Result 📄📊\n-------------------------\nPlayer1 [⚫]: ' + numOfBlack + '\n';
+		    if (mode === MODE_PLAYERVSPLAYER)
+		        finalResult += 'Player2 [⚪]: ' + numOfWhite + '\n\n';
+		    else
+		        finalResult += 'AI [⚪]: ' + numOfWhite + '\n\n';
+			
+			if (numOfWhite > numOfBlack) {
+			    if (mode === MODE_PLAYERVSPLAYER) {
+        	        say(finalResult + '🎉🎊Congratulations🎊🎉\n\nThe final winner is Player2.').then(() => {
+            	        start(say, sendButton);
+            	    });
+			    } else if (mode === MODE_PLAYERVSAI) {
+			        say(finalResult + 'Unfortunately, AI is the final winner.').then(() => {
+            	        start(say, sendButton);
+            	    });
+			    }
+	        } else if  (numOfBlack > numOfWhite) {
+	            say(finalResult + '🎉🎊Congratulations🎊🎉\n\nThe final winner is Player1.').then(() => {
+        	        start(say, sendButton);
+        	    });
+	        } else {
+	            say(finalResult + 'The game ended in a standoff.').then(() => {
+        	        start(say, sendButton);
+        	    });
+	        }
+		}
+	} else if (action === ACTION_GIVEUP){
+	    //if the player chooses "Give up", the opponent will win the game.
+	    if (mode === MODE_PLAYERVSPLAYER) {
+	        say('🎉🎊Congratulations🎊🎉\n\nThe final winner is Player' + (data.currentplayer%2+1) + '.').then(() => {
+    	        start(say, sendButton);
+    	    });
+	    } else if (mode === MODE_PLAYERVSAI) {
+    	    say('Unfortunately, AI is the final winner.').then(() => {
+    	        start(say, sendButton);
+    	    });
+	    }
+	}
+};
+
+module.exports = {
+	filename: 'Reversi_Game',
+	title: 'Reversi Game ⚫⚪',
+	introduction: [
+		'This is a traditional board game - Reversi ⚫⚪!',
+		'[Rules]\n----------\n\n' + 
+		'- The game is turn-based\n\n' +
+		'- Player1: ⚫, Player2 (or AI): ⚪\n\n' + 
+		'- Black moves first\n\n' + 
+		'- On your turn, it is needed to choose a location to place one piece on the board with your color. ' + 
+		'You must place the piece so that an opponent\'s piece, or a row of opponent\'s pieces, is flanked by your pieces\n\n' + 
+		'- If there is no a valid location, you have to pass back to the opponent\n\n' + 
+		'- Finally, the player with the most pieces on the board will win the game'
+	],
+	start: start,
+	state: state
+};
