@@ -9,4 +9,4 @@
 	
 4. Open the Nemo Bot Facebook platform to run the "Reversi Game".
 
-5. Open the serverdomain\web to open the game website.
+5. Open the serverdomain\fyp\web to open the game website.
